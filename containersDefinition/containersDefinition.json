@@ -1,0 +1,28 @@
+[
+    {
+      "name"      : "public",
+      "image"     : "296062560327.dkr.ecr.eu-west-1.amazonaws.com/proxy:latest",
+      "cpu"       : 10,
+      "memory"    : 512,
+      "essential" : true,
+      "portMappings" : [
+        {
+          "containerPort" : 80,
+          "hostPort"      : 80
+        }
+      ]
+    },
+    {
+      "name"      : "private",
+      "image"     : "296062560327.dkr.ecr.eu-west-1.amazonaws.com/app:latest",
+      "cpu"       : 10,
+      "memory"    : 256,
+      "essential" : true,
+      "portMappings" : [
+        {
+          "containerPort" : 8080,
+          "hostPort"      : 8080
+        }
+      ]
+    }
+  ]
