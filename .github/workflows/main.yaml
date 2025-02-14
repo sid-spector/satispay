@@ -48,7 +48,7 @@ jobs:
         uses: aws-actions/amazon-ecr-login@62f4f872db3836360b72999f4b87f1ff13310f3a
 
       - name: Build, tag, and push private ( application ) image to Amazon ECR
-        id: build-private
+        id: build-app
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           IMAGE_TAG: ${{ github.sha }}
@@ -58,13 +58,11 @@ jobs:
           echo "image=$ECR_REGISTRY/$ECR_REPOSITORY2:$IMAGE_TAG" >> $GITHUB_OUTPUT
 
       - name: Build, tag, and push proxy image to Amazon ECR
-        id: build-public
+        id: build-proxy
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           IMAGE_TAG: ${{ github.sha }}
         run: |
-          ls -lart .
-          ls -lart application/public/
           docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG application/public
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
           echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
@@ -75,7 +73,7 @@ jobs:
         with:
           task-definition: ${{ env.ECS_TASK_DEFINITION }}
           container-name: ${{ env.CONTAINER_NAME }}
-          image: ${{ steps.build-image.outputs.image }}
+          image: ${{ steps.build-proxy.image }}
 
       - name: Fill in the new image ID in the Amazon ECS task definition
         id: task-def-private
@@ -83,7 +81,7 @@ jobs:
         with:
           task-definition: ${{ env.ECS_TASK_DEFINITION }}
           container-name: ${{ env.CONTAINER_NAME2 }}
-          image: ${{ steps.build-image.outputs.image }}
+          image: ${{ steps.build-app.outputs.image }}
 
       - name: Deploy Amazon ECS task definition
         uses: aws-actions/amazon-ecs-deploy-task-definition@df9643053eda01f169e64a0e60233aacca83799a
