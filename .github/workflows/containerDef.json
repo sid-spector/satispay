@@ -1,0 +1,62 @@
+{
+    "taskDefinitionArn": "arn:aws:ecs:eu-west-1:296062560327:task-definition/statiscoso:1",
+    "containerDefinitions": [
+        {
+            "name": "public",
+            "image": "aws_account_id.dkr.ecr.region.amazonaws.com/my-repository:latest",
+            "cpu": 10,
+            "memory": 512,
+            "portMappings": [
+                {
+                    "containerPort": 80,
+                    "hostPort": 80,
+                    "protocol": "tcp"
+                }
+            ],
+            "essential": true,
+            "environment": [],
+            "mountPoints": [],
+            "volumesFrom": [],
+            "systemControls": []
+        },
+        {
+            "name": "private",
+            "image": "aws_account_id.dkr.ecr.region.amazonaws.com/my-repository:latest",
+            "cpu": 10,
+            "memory": 256,
+            "portMappings": [
+                {
+                    "containerPort": 8080,
+                    "hostPort": 8080,
+                    "protocol": "tcp"
+                }
+            ],
+            "essential": true,
+            "environment": [],
+            "mountPoints": [],
+            "volumesFrom": [],
+            "systemControls": []
+        }
+    ],
+    "family": "statiscoso",
+    "taskRoleArn": "arn:aws:iam::296062560327:role/ecr-read-role",
+    "revision": 1,
+    "volumes": [],
+    "status": "ACTIVE",
+    "requiresAttributes": [
+        {
+            "name": "com.amazonaws.ecs.capability.ecr-auth"
+        },
+        {
+            "name": "com.amazonaws.ecs.capability.task-iam-role"
+        }
+    ],
+    "placementConstraints": [],
+    "compatibilities": [
+        "EXTERNAL",
+        "EC2"
+    ],
+    "registeredAt": "2025-02-09T15:42:43.436Z",
+    "registeredBy": "arn:aws:sts::296062560327:assumed-role/terraformAdminRole/aws-go-sdk-1739115760518610646",
+    "tags": []
+}
