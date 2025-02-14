@@ -16,10 +16,47 @@ provider "aws" {
   }
 }
 
+
+locals {
+  name = "satclus"
+
+  user_data = <<-EOT
+    #!/bin/bash
+
+    cat <<'EOF' >> /etc/ecs/ecs.config
+    ECS_CLUSTER=${local.name}
+    ECS_LOGLEVEL=debug
+    ECS_ENABLE_TASK_IAM_ROLE=true
+    EOF
+  EOT
+}
+
 module "ecs" {
   source = "terraform-aws-modules/ecs/aws"
 
-  cluster_name = "satclus"
+  cluster_name = local.name
+
+    cluster_configuration = {
+    execute_command_configuration = {
+      logging = "OVERRIDE"
+      log_configuration = {
+        cloud_watch_log_group_name = "/aws/ecs/aws-ec2"
+      }
+    }
+  }
+
+  autoscaling_capacity_providers = {
+    one = {
+      auto_scaling_group_arn         = module.autoscaling.autoscaling_group_arn
+     managed_scaling = {
+        maximum_scaling_step_size = 5
+        minimum_scaling_step_size = 1
+        status                    = "ENABLED"
+        target_capacity           = 60
+      }
+
+    }
+  }
 
 }
 
@@ -29,6 +66,16 @@ resource "aws_ecs_service" "satispay" {
   cluster         = module.ecs.cluster_id
   task_definition = resource.aws_ecs_task_definition.public.arn
   desired_count   = 1
+
+  requires_compatibilities = ["EC2"]
+  capacity_provider_strategy = {
+    # On-demand instances
+    ex_1 = {
+      capacity_provider = module.ecs_cluster.autoscaling_capacity_providers["one"].name
+      weight            = 1
+      base              = 1
+    }
+  }
 
   load_balancer {
     target_group_arn = module.alb.target_groups.public.arn
@@ -166,3 +213,32 @@ resource "aws_iam_policy" "ecr_read_policy" {
 EOT
   
 }
+
+data "aws_ssm_parameter" "ecs_optimized_ami" {
+  name = "/aws/service/ecs/optimized-ami/amazon-linux-2/recommended"
+}
+
+
+module "autoscaling" {
+  source  = "terraform-aws-modules/autoscaling/aws"
+  version = "~> 6.5"
+  name = "ex_1"
+  instance_type              = "t3.micro"
+  use_mixed_instances_policy = false
+  mixed_instances_policy     = {}
+  min_size = 1
+  max_size = 3
+   create                 = true
+  create_launch_template = true
+  vpc_zone_identifier = module.vpc.private_subnets
+  image_id      = jsondecode(data.aws_ssm_parameter.ecs_optimized_ami.value)["image_id"]
+  create_iam_instance_profile = true
+  iam_role_name               = local.name
+  iam_role_description        = "ECS role for ${local.name}"
+  iam_role_policies = {
+    AmazonEC2ContainerServiceforEC2Role = "arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role"
+    AmazonSSMManagedInstanceCore        = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
+  }
+   health_check_type   = "EC2"
+   user_data                       = base64encode(local.user_data)
+  }
