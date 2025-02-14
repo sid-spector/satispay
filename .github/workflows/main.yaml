@@ -47,7 +47,7 @@ jobs:
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@62f4f872db3836360b72999f4b87f1ff13310f3a
 
-      - name: Build, tag, and push image to Amazon ECR
+      - name: Build, tag, and push private ( application ) image to Amazon ECR
         id: build-private
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
@@ -57,7 +57,7 @@ jobs:
           docker push $ECR_REGISTRY/$ECR_REPOSITORY2:$IMAGE_TAG
           echo "image=$ECR_REGISTRY/$ECR_REPOSITORY2:$IMAGE_TAG" >> $GITHUB_OUTPUT
 
-      - name: Build, tag, and push image to Amazon ECR
+      - name: Build, tag, and push proxy image to Amazon ECR
         id: build-public
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
